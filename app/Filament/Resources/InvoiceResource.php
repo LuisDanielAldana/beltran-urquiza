@@ -148,7 +148,33 @@ class InvoiceResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                //
+
+                Tables\Filters\Filter::make('transaction_date')
+                    ->label('Transaction date range')
+                    ->form([
+                        Forms\Components\DatePicker::make('from')
+                            ->label('From'),
+                        Forms\Components\DatePicker::make('until')
+                            ->label('To'),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query
+                            ->when(
+                                $data['from'] ?? null,
+                                fn (Builder $query, $date): Builder =>
+                                $query->whereDate('transaction_date', '>=', $date),
+                            )
+                            ->when(
+                                $data['until'] ?? null,
+                                fn (Builder $query, $date): Builder =>
+                                $query->whereDate('transaction_date', '<=', $date),
+                            );
+                    }),
+                Tables\Filters\TernaryFilter::make('is_cancelled')
+                    ->label('Facturas canceladas')
+                    ->placeholder('Todas')
+                    ->trueLabel('Solo canceladas')
+                    ->falseLabel('Solo activas'),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
